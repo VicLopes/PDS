@@ -21,7 +21,7 @@ class Filter(object):
     def LPF(self, n):
         time = n
     """
-def plotting(sig, modSig, demodSig):
+def plotting(sig, modSig, demodSig, n):
     fig, ax = plt.subplots(3, 1)
     ax[0].plot(n,sig)
     ax[0].set_xlabel('Time')
@@ -44,8 +44,10 @@ n = np.arange(0, audlength, 1/Fs)
 Fc = 88000
 Ac = 3
 
-carrier = Ac*np.cos(2*np.pi*Fc*n)
-modulatedSig = carrier*sig
-demodulatedSig = modulatedSig * Ac*np.cos(2*np.pi*3*n)
+mult = np.cos(2*np.pi*Fc*n + np.pi/2)
 
-plotting(sig, modulatedSig, demodulatedSig)
+carrier = Ac * mult
+modulatedSig = carrier * sig
+demodulatedSig = modulatedSig * mult
+
+plotting(sig, modulatedSig, demodulatedSig, n)
