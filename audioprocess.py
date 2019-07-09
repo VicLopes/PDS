@@ -100,7 +100,7 @@ mult = np.cos(2*np.pi*Fc*n + np.pi/2)
 factor = int(input("Escreva o fator de dizimação:"))
 
 carrier = Ac * mult
-decimate(sig, factor)
+sig = decimate(sig, factor)
 modulatedSig = modula(carrier, sig)
 demodulatedSig = demodula(modulatedSig, mult)
 
