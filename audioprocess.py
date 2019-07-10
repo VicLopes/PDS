@@ -1,37 +1,21 @@
 import scipy.io.wavfile as wav
 import numpy as np
 import matplotlib.pyplot as plt
-import time, sys
+import sys
 import tkinter as tk
 import scipy.fftpack as fourier
-from pygame import mixer
 from tkinter import filedialog
-from scipy.signal import butter, lfilter, freqz, decimate, buttord
+from scipy.signal import butter, lfilter, freqz, decimate, buttord, resample
 
-#Inicializando
-root = tk.Tk()
-file_path = filedialog.askopenfilename()
-mixer.init()
-
-"""
-class Filter(object):
-    def __init__(self, cutoff):
-        self.cutoff_frequency = cutoff
-    
-    def LPF(self, n):
-        time = n
-    """
-def plotting(sig, modSig, demodSig, n):
-    fig, ax = plt.subplots(3, 1)
+def plotting(sig, modSig, n):
+    fig, ax = plt.subplots(2, 1)
     ax[0].plot(n,sig)
     ax[0].set_xlabel('Time')
     ax[0].set_ylabel('Amplitude')
     ax[1].plot(n,modSig,'g') 
     ax[1].set_xlabel('Modulated Signal')
-    ax[2].plot(n,demodSig, 'r')
-    ax[2].set_xlabel('Demodulated Signal')
     plt.show()
-
+"""
 def passafaixa(h1, Fs2):
     # Filtro Passa-Faixa
     gpass= 3 # Ripple na banda de passagem
@@ -75,33 +59,81 @@ def passafaixa(h1, Fs2):
     #plt.xlabel('Tempo(s)')
     #plt.ylabel('Amplitude')
     #plt.plot(n2, y)
-
+"""
 def modula(carrier, sig):
     mod = carrier * sig
     return mod
 
-def demodula(sig, mult):
-    demod = sig * mult
+def demodula(sig, carrier):
+    demod = sig * carrier
     return demod
 
-# Dá play no som
-sound = mixer.Sound(file_path)
-sound.play()
-time.sleep(2)
+#Inicializando
+root = tk.Tk()
+file_path = filedialog.askopenfilename()
 
 (freq,sig) = wav.read(file_path)
 Fs = freq
 audlength = len(sig)/freq
-n = np.arange(0, audlength, 1/Fs)
-Fc = 100 #Frequência do Carrier
+n1 = np.arange(0, audlength/2, 1/Fs)
+Fc = 5000 #Frequência do Carrier
 Ac = 1 #Amplitude do Carrier
 
-mult = np.cos(2*np.pi*Fc*n + np.pi/2)
+mult = np.cos(2*np.pi*Fc*n1 + np.pi/2)
 factor = int(input("Escreva o fator de dizimação:"))
 
-carrier = Ac * mult
+carrier = (Ac * mult)
+"""Gráfico do sinal Carrier
+plt.title('Sinal Portador')
+plt.plot(n, carrier)
+plt.grid()
+plt.show()
+"""
 sig = decimate(sig, factor)
 modulatedSig = modula(carrier, sig)
-demodulatedSig = demodula(modulatedSig, mult)
+plotting(sig, modulatedSig, n1) #Plota o primeiro sinal e a sua versão modulada
 
-plotting(sig, modulatedSig, demodulatedSig, n)
+print("==Segundo arquivo==")
+file_path = filedialog.askopenfilename()
+(freq, sig2) = wav.read(file_path)
+Fs = freq
+audlength = len(sig2)/freq
+n2 = np.arange(0, audlength/2, 1/Fs)
+
+mult = np.cos(2*np.pi*Fc*n2 + np.pi/2)
+carrier = (Ac * mult)
+"""Gráfico do sinal Carrier
+plt.title('Sinal Portador')
+plt.plot(n, carrier)
+plt.grid()
+plt.show()
+"""
+
+sig2 = decimate(sig2, factor)
+modulatedSig2 = modula(carrier, sig2)
+
+plotting(sig2, modulatedSig2, n2)
+
+#Iguala o comprimento dos sinais, cortando o 'resto' do maior
+if len(sig) > len(sig2):
+    modulatedSig = modulatedSig[:len(modulatedSig2)]
+    n1 = n2
+if len(sig) < len(sig2):
+    modulatedSig2 = modulatedSig2[:len(modulatedSig)]
+    n2 = n1
+
+#Soma os sinais modulados
+modulatedSig = modulatedSig + modulatedSig2
+mult = np.cos(2*np.pi*Fc*n2 + np.pi/2)
+carrier = (Ac * mult)
+
+demodulatedSig = demodula(modulatedSig, carrier)
+plt.plot(n1, demodulatedSig)
+plt.title('Sinal demodulado')
+plt.xlabel('n')
+plt.ylabel('Amplitude')
+plt.show()
+
+#Upsampling do sinal
+resample(demodulatedSig, len(sig))
+wav.write('./audios/demodsig.wav', Fs, demodulatedSig)
