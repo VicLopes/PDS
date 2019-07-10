@@ -5,6 +5,7 @@ import sys
 import tkinter as tk
 import scipy.fftpack as fourier
 import sklearn.metrics as metrics
+import librosa
 from tkinter import filedialog
 from scipy.signal import butter, lfilter, freqz, decimate, buttord, resample, iirdesign
 
@@ -157,3 +158,5 @@ input("Aperte enter para continuar.")
 plotting(sig, passSig, np.arange(0, audlength1, 1/Fs))
 
 print(metrics.mean_squared_error(sig, passSig))
+
+wav.write("audiofinal1.wav", Fs, passSig)
