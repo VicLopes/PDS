@@ -5,7 +5,6 @@ import sys
 import tkinter as tk
 import scipy.fftpack as fourier
 import sklearn.metrics as metrics
-import librosa
 from tkinter import filedialog
 from scipy.signal import butter, lfilter, freqz, decimate, buttord, resample, iirdesign
 
@@ -87,13 +86,13 @@ file_path1 = filedialog.askopenfilename()
 (freq,sig) = wav.read(file_path1)
 Fs = freq
 audlength1 = len(sig)/freq
-Fc = 5000 #Frequência do Carrier
+Fc1 = 10000 #Frequência do Carrier
 Ac = 1 #Amplitude do Carrier
 
 
 factor = int(input("Escreva o fator de dizimação:"))
 n1 = np.arange(0, audlength1/factor, 1/Fs)
-mult = np.cos(2*np.pi*Fc*n1 + np.pi/2)
+mult = np.cos(2*np.pi*Fc1*n1 + np.pi/2)
 
 carrier = (Ac * mult)
 """Gráfico do sinal Carrier
@@ -104,6 +103,7 @@ plt.show()
 """
 decSig = decimate(sig, factor)
 modulatedSig = modula(carrier, decSig)
+wav.write("modulated1.wav", Fs, modulatedSig)
 plotting(decSig, modulatedSig, n1) #Plota o primeiro sinal e a sua versão modulada
 
 print("==Segundo arquivo==")
@@ -112,8 +112,9 @@ file_path2 = filedialog.askopenfilename()
 Fs = freq
 audlength2 = len(sig2)/freq
 n2 = np.arange(0, audlength2/factor, 1/Fs)
+Fc2 = 5000 # Frequência do segundo carrier, que será descartado
 
-mult = np.cos(2*np.pi*Fc*n2 + np.pi/2)
+mult = np.cos(2*np.pi*Fc2*n2 + np.pi/2)
 carrier = (Ac * mult)
 """Gráfico do sinal Carrier
 plt.title('Sinal Portador')
@@ -124,6 +125,7 @@ plt.show()
 
 decSig2 = decimate(sig2, factor)
 modulatedSig2 = modula(carrier, decSig2)
+wav.write("modulated2.wav", Fs, modulatedSig2)
 
 plotting(decSig2, modulatedSig2, n2)
 
@@ -139,10 +141,11 @@ if len(decSig) < len(decSig2):
 
 #Soma os sinais modulados
 modulatedSig = modulatedSig + modulatedSig2
-mult = np.cos(2*np.pi*Fc*n2 + np.pi/2)
+mult = np.cos(2*np.pi*Fc1*n2 + np.pi/2)
 carrier = (Ac * mult)
+wav.write("audiosomado.wav", Fs, modulatedSig)
 
-demodulatedSig = demodula(modulatedSig, carrier)
+demodulatedSig = demodula(modulatedSig, carrier) #Retira o Carrier 1
 plt.plot(n1, demodulatedSig)
 plt.title('Sinal demodulado')
 plt.xlabel('n')
@@ -155,7 +158,7 @@ passSig = passafaixa(demodulatedSig, Fs)
 passSig = resample(passSig, len(sig))
 
 input("Aperte enter para continuar.")
-plotting(sig, passSig, np.arange(0, audlength1, 1/Fs))
+plotting(sig, passSig, np.arange(0, len(sig)/Fs, 1/Fs))
 
 print(metrics.mean_squared_error(sig, passSig))
 
