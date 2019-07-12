@@ -32,7 +32,7 @@ def modula(carrier, sig):
     mod = carrier * sig
     return mod
 
-def demodula(sig, carrier):
+def demodula(sig, carrier, Fc, n):
     demod = sig * carrier
     return demod
 
@@ -91,20 +91,21 @@ if len(decSig) > len(decSig2):
     modulatedSig = modulatedSig[:len(modulatedSig2)]
     audlength1 = audlength2
     n1 = n2
-if len(decSig) < len(decSig2):
+    relength = len(sig)/len(sig2)
+elif len(decSig) < len(decSig2):
     modulatedSig2 = modulatedSig2[:len(modulatedSig)]
     audlength2 = audlength1
     n2 = n1
+    relength = 1
 
 #Soma os sinais modulados
 modulatedSig = modulatedSig + modulatedSig2
 mult = np.cos(2*np.pi*Fc1*n1)
 carrier = (Ac * mult)
 
-#passSig = passafaixa(modulatedSig, Fs)
 passSig = butter_bandpass_filter(modulatedSig, 2500.0, 3000.0, 8000)
 
-demodulatedSig = demodula(passSig, carrier) #Retira o Carrier 1
+demodulatedSig = demodula(passSig, carrier, Fc1, n1) #Retira o Carrier 1
 plt.plot(n1, demodulatedSig)
 plt.title('Sinal demodulado')
 plt.xlabel('n')
@@ -121,5 +122,5 @@ input("Aperte enter para continuar.")
 plotting(sig, passSig, np.arange(0, len(sig)/Fs, 1/Fs))
 
 print(metrics.mean_squared_error(sig, passSig))
-
-wav.write("audiofinal1.wav", Fs, passSig)
+print(relength)
+wav.write("audiofinal1.wav", int(Fs*relength), passSig)
