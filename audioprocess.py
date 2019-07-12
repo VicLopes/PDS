@@ -48,8 +48,8 @@ Ac = 0.06 #Amplitude do Carrier
 
 
 factor = int(input("Escreva o fator de dizimação:"))
-n = np.arange(0, audlength1/factor, 1/Fs)
-mult = np.cos(2*np.pi*Fc1*n)
+n1 = np.arange(0, audlength1/factor, 1/Fs)
+mult = np.cos(2*np.pi*Fc1*n1)
 
 carrier = (Ac * mult)
 """Gráfico do sinal Carrier
@@ -60,19 +60,18 @@ plt.show()
 """
 decSig = decimate(sig, factor)
 modulatedSig = modula(carrier, decSig)
-print(Fs)
-print(factor)
-plotting(decSig, modulatedSig, n) #Plota o primeiro sinal e a sua versão modulada
+
+plotting(decSig, modulatedSig, n1) #Plota o primeiro sinal e a sua versão modulada
 
 print("==Segundo arquivo==")
 file_path2 = filedialog.askopenfilename()
 (freq, sig2) = wav.read(file_path2)
 Fs = freq
 audlength2 = len(sig2)/freq
-n = np.arange(0, audlength2/factor, 1/Fs)
+n2 = np.arange(0, audlength2/factor, 1/Fs)
 Fc2 = 50000 # Frequência do segundo carrier, que será descartado
 
-mult = np.cos(2*np.pi*Fc2*n)
+mult = np.cos(2*np.pi*Fc2*n2)
 carrier = (Ac * mult)
 """Gráfico do sinal Carrier
 plt.title('Sinal Portador')
@@ -83,29 +82,30 @@ plt.show()
 
 decSig2 = decimate(sig2, factor)
 modulatedSig2 = modula(carrier, decSig2)
-print(Fs)
-print(factor)
 
-plotting(decSig2, modulatedSig2, n)
+
+plotting(decSig2, modulatedSig2, n2)
 
 #Iguala o comprimento dos sinais, cortando o 'resto' do maior
 if len(decSig) > len(decSig2):
     modulatedSig = modulatedSig[:len(modulatedSig2)]
     audlength1 = audlength2
+    n1 = n2
 if len(decSig) < len(decSig2):
     modulatedSig2 = modulatedSig2[:len(modulatedSig)]
     audlength2 = audlength1
+    n2 = n1
 
 #Soma os sinais modulados
 modulatedSig = modulatedSig + modulatedSig2
-mult = np.cos(2*np.pi*Fc1*n)
+mult = np.cos(2*np.pi*Fc1*n1)
 carrier = (Ac * mult)
 
 #passSig = passafaixa(modulatedSig, Fs)
 passSig = butter_bandpass_filter(modulatedSig, 2500.0, 3000.0, 8000)
 
 demodulatedSig = demodula(passSig, carrier) #Retira o Carrier 1
-plt.plot(n, demodulatedSig)
+plt.plot(n1, demodulatedSig)
 plt.title('Sinal demodulado')
 plt.xlabel('n')
 plt.ylabel('Amplitude')
@@ -121,6 +121,5 @@ input("Aperte enter para continuar.")
 plotting(sig, passSig, np.arange(0, len(sig)/Fs, 1/Fs))
 
 print(metrics.mean_squared_error(sig, passSig))
-print(len(sig))
-print(len(passSig))
+
 wav.write("audiofinal1.wav", Fs, passSig)
